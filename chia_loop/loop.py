@@ -21,7 +21,24 @@ import os
 import re
 import sys
 import time
+import warnings
 from pathlib import Path
+
+# Two warnings from dependencies fire on every run and say nothing about this
+# loop. They are silenced by message, never by category, so anything else from
+# the same libraries still prints. Set GRAPHSYNTH_SHOW_WARNINGS=1 to see them.
+#
+# Ray's is a deprecation notice offering RAY_ACCEL_ENV_VAR_OVERRIDE_ON_ZERO=0
+# as the way to turn it off. We do not take that offer: it would stop Ray
+# clearing CUDA_VISIBLE_DEVICES for tasks that requested no GPU, and
+# synthesize_kernel requesting no GPU is exactly how this loop keeps the agent
+# off the measurement hardware. Silencing the message is cosmetic; taking the
+# suggested fix would not be.
+if not os.environ.get("GRAPHSYNTH_SHOW_WARNINGS"):
+    warnings.filterwarnings(
+        "ignore", message=r".*RAY_ACCEL_ENV_VAR_OVERRIDE_ON_ZERO.*")
+    warnings.filterwarnings(
+        "ignore", message=r".*has an incomplete definition.*")
 
 import ray
 
