@@ -1,11 +1,11 @@
-op,outcome,eager_us_l40s,graphsynth_us_l40s,speedup_l40s,eager_us_a100,graphsynth_us_a100,speedup_a100,eager_ratio_l40s_over_a100,kernel_ratio_l40s_over_a100,note
-sigmoid_attn,rejected,14947.7,,,8537.3,1073.5,7.95,1.751,,"iter1 CompilationError (tl.arange constexpr); iter2,3 rel_err=1.01"
-relu_attn,accepted,14936.6,410.2,36.41,8536.5,472.5,18.07,1.750,0.868,6.26e-03
-temp_perhead,rejected,16787.8,,,9522.3,1874.7,5.08,1.763,,"iter1,2 tl.dot dtype fp32/bf16; iter3 OutOfResources shared memory 131072 > 101376"
-bias_alibi,accepted,19499.7,525.9,37.08,11079.5,845.0,13.11,1.760,0.622,5.86e-03
-bias_dilated,accepted,15167.2,1118.0,13.57,8440.7,1817.4,4.64,1.797,0.615,6.44e-03
-bias_local,accepted,15117.4,400.1,37.78,8390.0,662.0,12.67,1.802,0.604,1.55e-02
-bias_block_diagonal,accepted,14992.5,198.2,75.64,8251.5,289.6,28.49,1.817,0.684,5.28e-03
-bias_prefix_lm,accepted,15150.9,994.4,15.24,8335.8,1389.7,6.00,1.818,0.716,1.30e-02
-softcap_gemma2,accepted,19975.7,620.9,32.17,10645.0,900.9,11.82,1.877,0.689,5.83e-03
-bias_sliding_window,accepted,15046.4,269.5,55.83,8332.9,432.8,19.25,1.806,0.623,5.16e-03
+op,outcome,accepted_at_iter,rel_err,eager_us_l40s,graphsynth_us_l40s,speedup_l40s,eager_us_a100,graphsynth_us_a100,speedup_a100,eager_ratio_l40s_over_a100,kernel_ratio_l40s_over_a100
+sigmoid_attn,accepted,2,4.33e-03,18303.2,591.1,30.96,8537.3,1073.5,7.95,2.144,0.551
+relu_attn,accepted,1,5.89e-03,18138.8,414.4,43.77,8536.5,472.5,18.07,2.125,0.877
+temp_perhead,rejected,,rejected,16787.2,,,9522.3,1874.7,5.08,1.763,
+bias_alibi,accepted,1,5.95e-03,19487.1,527.0,36.98,11079.5,845.0,13.11,1.759,0.624
+bias_dilated,accepted,1,3.91e-03,15172.2,1119.5,13.55,8440.7,1817.4,4.64,1.798,0.616
+bias_local,accepted,1,1.66e-02,15126.0,402.1,37.62,8390.0,662.0,12.67,1.803,0.607
+bias_block_diagonal,accepted,1,4.52e-03,14996.3,198.1,75.70,8251.5,289.6,28.49,1.817,0.684
+bias_prefix_lm,accepted,1,1.21e-02,15148.3,1000.9,15.13,8335.8,1389.7,6.00,1.817,0.720
+softcap_gemma2,accepted,1,5.34e-03,19966.9,622.4,32.08,10645.0,900.9,11.82,1.876,0.691
+bias_sliding_window,accepted,1,3.85e-03,15042.4,268.9,55.94,8332.9,432.8,19.25,1.805,0.621
