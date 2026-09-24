@@ -1,0 +1,11 @@
+op,outcome,eager_us_l40s,graphsynth_us_l40s,speedup_l40s,eager_us_a100,graphsynth_us_a100,speedup_a100,eager_ratio_l40s_over_a100,kernel_ratio_l40s_over_a100,note
+sigmoid_attn,rejected,14947.7,,,8537.3,1073.5,7.95,1.751,,"iter1 CompilationError (tl.arange constexpr); iter2,3 rel_err=1.01"
+relu_attn,accepted,14936.6,410.2,36.41,8536.5,472.5,18.07,1.750,0.868,6.26e-03
+temp_perhead,rejected,16787.8,,,9522.3,1874.7,5.08,1.763,,"iter1,2 tl.dot dtype fp32/bf16; iter3 OutOfResources shared memory 131072 > 101376"
+bias_alibi,accepted,19499.7,525.9,37.08,11079.5,845.0,13.11,1.760,0.622,5.86e-03
+bias_dilated,accepted,15167.2,1118.0,13.57,8440.7,1817.4,4.64,1.797,0.615,6.44e-03
+bias_local,accepted,15117.4,400.1,37.78,8390.0,662.0,12.67,1.802,0.604,1.55e-02
+bias_block_diagonal,accepted,14992.5,198.2,75.64,8251.5,289.6,28.49,1.817,0.684,5.28e-03
+bias_prefix_lm,accepted,15150.9,994.4,15.24,8335.8,1389.7,6.00,1.818,0.716,1.30e-02
+softcap_gemma2,accepted,19975.7,620.9,32.17,10645.0,900.9,11.82,1.877,0.689,5.83e-03
+bias_sliding_window,accepted,15046.4,269.5,55.83,8332.9,432.8,19.25,1.806,0.623,5.16e-03

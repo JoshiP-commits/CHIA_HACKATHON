@@ -57,9 +57,23 @@ statistic from the CSVs and needs no GPU.
 
 Nothing in `chia_loop/` imports anything from `provenance/`.
 
+## Two devices
+
+`RESULTS_L40S.md` reports the loop running for real on an **NVIDIA L40S** with
+only the LLM call bypassed: every kernel compiled by Triton for sm89, checked
+against the PyTorch reference and timed. 8/10 accepted, geomean **33.08x**
+against **12.35x** for the same eight on the A100.
+
+The reason the speedup nearly triples is the point of the experiment. Eager
+attention is **1.794x** slower on the L40S; the two devices' bandwidths differ
+by **1.800x**. The baseline is bandwidth-bound to within 0.3%, exactly as the
+minimum-traffic argument predicts, while the fused kernels got *faster* on the
+slower-bandwidth device. The two operators that failed, and why, are recorded
+there too.
+
 ## Honest scope
 
-The measurements were taken on an **A100-SXM4-40GB**. The replay above executes
+The A100 measurements were taken on an **A100-SXM4-40GB**. The replay above executes
 the loop's graph, scheduling, tools and database for real against that recorded
 data; it does not re-measure. Two stronger modes are documented in
 `chia_loop/README.md`:
