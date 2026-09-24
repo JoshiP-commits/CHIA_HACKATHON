@@ -116,19 +116,28 @@ def reference_for(spec: OpSpec) -> Callable:
                 s = mod(s)
             i, j = idx()
             ok = maskfn(i, j) if maskfn else (j <= i)
-            # The mask has to be applied on the side of the nonlinearity where
-            # "masked" actually means "contributes nothing". For softmax that is
-            # before, with -inf. For sigmoid it is AFTER: sigmoid(0) = 0.5, so
-            # zeroing the score first leaves every masked position contributing
-            # half of its value vector. relu is indifferent, since relu(0) = 0,
-            # but it is masked after as well so that all three read alike.
-            if norm == "softmax":
-                s = s.masked_fill(~ok, float("-inf"))
-                p = torch.softmax(s.float(), -1)
-            elif norm == "sigmoid":
-                p = torch.sigmoid(s.float()).masked_fill(~ok, 0.0)
+            # The mask goes on whichever side of the nonlinearity makes
+            # "masked" mean "contributes nothing", and no later than that.
+            #
+            # softmax: before, with -inf.
+            # relu:    before, with 0, since relu(0) = 0. Masking after would be
+            #          mathematically identical but would run over the fp32
+            #          score tensor (1 GB at B=2 H=32 S=2048) instead of the
+            #          bf16 one, adding ~2 GB of DRAM traffic per call and
+            #          inflating this baseline by roughly 20% on a GDDR6 device.
+            # sigmoid: after, because sigmoid(0) = 0.5 -- zeroing the score
+            #          first leaves every masked position contributing half of
+            #          its value vector. This is the one place the extra fp32
+            #          pass is unavoidable, and it matches ref_sigmoid() in
+            #          provenance/sigmoid_fix.py, which produced the A100
+            #          sigmoid numbers.
+            if norm == "sigmoid":
+                p = torch.sigmoid(s.float()) * ok.to(torch.float32)
             else:
-                p = F.relu(s.float()).masked_fill(~ok, 0.0)
+                fill = float("-inf") if norm == "softmax" else 0.0
+                s = s.masked_fill(~ok, fill)
+                p = (torch.softmax(s.float(), -1) if norm == "softmax"
+                     else F.relu(s.float()))
             return p.to(DT) @ v
         return ref
 
