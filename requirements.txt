@@ -1,0 +1,6 @@
+# Replay mode (no GPU, no credentials) needs only this:
+chialoops>=1.0.1
+
+# Live or synthesis-only mode additionally needs a bf16-capable GPU and:
+#   torch==2.9.1        (ships its own matching Triton; do not install Triton separately)
+#   google-genai        (only for the full live loop, with Vertex AI credentials)

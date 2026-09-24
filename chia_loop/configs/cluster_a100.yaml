@@ -1,0 +1,38 @@
+# CHIA cluster for a live GraphSynth run.
+#
+#   chia up chia_loop/configs/cluster_a100.yaml
+#   GRAPHSYNTH_MODE=cluster python -m chia_loop.loop --project <gcp-project>
+#   chia down chia_loop/configs/cluster_a100.yaml
+#
+# Two logical workers, because the two halves of this loop must not share a
+# machine role: the synthesis agent needs Vertex credentials and no GPU, the
+# measurement nodes need a GPU and no credentials. Keeping them apart is what
+# makes "the agent cannot reach the verifier" a property of the deployment and
+# not just of the Python.
+
+provider:
+  head_ip: localhost
+
+auth:
+  ssh_user: ${USER}
+  ssh_private_key: ~/.ssh/id_rsa
+
+available_node_types:
+
+  # Holds Vertex AI credentials. No GPU: it never measures anything.
+  Synthesis_Worker:
+    resources: {"vertex_creds": 1}
+    min_workers: 1
+    max_workers: 1
+    compatible_ips: [localhost]
+    worker_setup_commands:
+      - "pip install -q chialoops google-genai"
+
+  # Holds the GPU. No credentials: it never talks to a model.
+  Measurement_Worker:
+    resources: {"a100": 1}
+    min_workers: 1
+    max_workers: 1
+    compatible_ips: [localhost]
+    worker_setup_commands:
+      - "pip install -q chialoops torch==2.9.1"

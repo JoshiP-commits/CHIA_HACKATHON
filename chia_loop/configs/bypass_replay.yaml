@@ -1,0 +1,10 @@
+# Replay the recorded A100 run: every node is still scheduled with its real
+# resource requirements, but its body is replaced by the data in results/ and
+# kernels_*/. Lets the loop execute end to end with no GPU and no Vertex AI.
+#
+#   python -m chia_loop.loop --bypass chia_loop/configs/bypass_replay.yaml
+bypass:
+  synthesize_kernel: { bypass: true }   # -> recorded kernel source
+  profile_op:        { bypass: true }   # -> recorded eager baseline
+  verify_kernel:     { bypass: true }   # -> recorded relative error
+  benchmark_kernel:  { bypass: true }   # -> recorded A100 latency

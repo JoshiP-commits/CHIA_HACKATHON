@@ -1,0 +1,74 @@
+# GraphSynth as a CHIA loop
+
+**A3 @ MICRO 2026 — CHIA Hackathon submission.**
+
+An agentic loop, built on [CHIA](https://github.com/ucb-bar/chia), that
+synthesizes Triton kernels for attention variants PyTorch's fused-kernel
+catalog does not cover, gates them on numerical correctness, and measures the
+survivors on hardware.
+
+```
+  profile_op ──(admitted)──► [ synthesise ⇄ workbench + history tools ] ──► verify_kernel
+       ▲                                                                        │
+       │                                                                    fail│pass
+       └──────────────────── next candidate ◄──── persist ◄──── benchmark_kernel
+```
+
+## Run it in one minute, on anything
+
+No GPU, no API key, no credentials:
+
+```bash
+pip install chialoops
+python -m chia_loop.loop --bypass chia_loop/configs/bypass_replay.yaml
+```
+
+Expected output:
+
+```
+accepted 10/10
+geometric mean speedup over eager: 10.83x
+```
+
+Every node is really scheduled on Ray with its real resource requirements, the
+MCP tool servers really start, the attempts database really fills. Only the
+node *bodies* are replaced by recorded data, using CHIA's `Bypass` — which the
+CHIA paper (4.3.6) names replaying non-deterministic LLM calls as the
+motivating case for.
+
+`chia_loop/README.md` is the real documentation: the programmatic-versus-agentic
+edge assignment, why the verifier is unreachable from the agent, and the three
+run modes. Read that one.
+
+## What is in this repository
+
+| | |
+|---|---|
+| `chia_loop/` | the loop itself — four `ChiaFunction` nodes, one `ChiaTool`, the bypass providers |
+| `results/` | the recorded A100 run: per-operator latencies, relative errors, backend choice |
+| `kernels_gemini25pro_2346/`<br>`kernels_gemini31propre_0018/`<br>`kernels_sigmoid_fix/` | the Triton kernels the loop synthesized, as written |
+| `provenance/` | the standalone scripts the recordings came from, so the numbers can be traced rather than trusted |
+
+`provenance/` exists for one reason: `chia_loop/ops.py` and `chia_loop/timing.py`
+state that they are copied verbatim from `synth10.py` and `final_bench.py`.
+Those files are here so that claim can be checked with `diff` instead of taken
+on faith. `provenance/verify_paper_numbers.py` recomputes every published
+statistic from the CSVs and needs no GPU.
+
+Nothing in `chia_loop/` imports anything from `provenance/`.
+
+## Honest scope
+
+The measurements were taken on an **A100-SXM4-40GB**. The replay above executes
+the loop's graph, scheduling, tools and database for real against that recorded
+data; it does not re-measure. Two stronger modes are documented in
+`chia_loop/README.md`:
+
+- `bypass_synthesis_only.yaml` — bypasses **only** the LLM call. On any bf16
+  GPU the recorded kernels genuinely compile, verify against the PyTorch
+  reference, and get timed on your hardware.
+- no `--bypass` — the full live loop, needing a GPU and Vertex AI credentials.
+
+## License
+
+MIT. See `LICENSE`.

@@ -1,0 +1,15 @@
+# Replay ONLY the LLM call; run every hardware node for real.
+#
+# This is the mode to use on a GPU you have but without Vertex AI credentials.
+# The recorded kernels are fed in as if the agent had just written them, then
+# genuinely compiled, verified against the PyTorch reference and timed on your
+# GPU. Everything the paper claims about correctness and latency is re-measured;
+# only the non-deterministic synthesis step is replayed.
+#
+#   python -m chia_loop.loop --bypass chia_loop/configs/bypass_synthesis_only.yaml
+#
+# Needs a bf16-capable GPU (sm80+: A100, L4, A10, RTX 30-series or newer) for
+# the recorded kernels. On older cards see configs/live_local.md.
+bypass:
+  synthesize_kernel: { bypass: true }   # -> recorded kernel source
+  # profile_op, verify_kernel, benchmark_kernel all run for real.
