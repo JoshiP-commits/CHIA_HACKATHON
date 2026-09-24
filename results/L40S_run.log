@@ -8,10 +8,13 @@ verbatim program output, elided only where marked [...].
 Environment: torch 2.9.1+cu128, Triton 3.5.1, Python 3.10.12,
 NVIDIA L40S (compute capability 8.9, 46068 MiB), B=2 H=32 S=2048 D=128, bf16.
 
-Two runs are recorded. Run 1 was made before the sigmoid reference bug
-described in RESULTS_L40S.md was found; run 2 after it was fixed. Run 1 is kept
-because the numbers reported for the eager baseline in both runs are what
-establishes its reproducibility, and because the failure is part of the result.
+Two runs are recorded here: the first, before the sigmoid reference bug
+described in RESULTS_L40S.md was found, and the final one after all three bugs
+were fixed. Run 1 is kept because its eager baselines agree with the final
+run's to within 0.5%, which is what establishes their reproducibility, and
+because the failure is part of the result. Two intermediate runs, made while
+the reference briefly carried an extra fp32 masking pass, are described in
+RESULTS_L40S.md and are not reproduced here.
 
 
 ================================================================================
@@ -95,35 +98,48 @@ DIAGNOSTIC -- after the fix
 
 
 ================================================================================
-RUN 2 -- 2026-09-25 04:50, after the sigmoid reference fix
+FINAL RUN -- 2026-09-25 05:08, from a clean clone, all three bugs fixed
 ================================================================================
 
 === sigmoid_attn
-    AI 1024.0 vs ridge 419.0 | memory-bound False | admitted True | eager 18303.2 us
+    AI 1024.0 vs ridge 419.0 | memory-bound False | admitted True | eager 15021.7 us
     iter 1: REJECTED  rel_err=inf  CompilationError: arange's arguments must be
                                    of type tl.constexpr        [...]
-    iter 2: ACCEPTED  rel_err=4.33e-03  591.1 us  30.96x over eager
+    iter 2: ACCEPTED  rel_err=4.21e-03  592.3 us  25.36x over eager
 
 === relu_attn
-    AI 1024.0 vs ridge 419.0 | memory-bound False | admitted True | eager 18138.8 us
-    iter 1: ACCEPTED  rel_err=5.89e-03  414.4 us  43.77x over eager
+    AI 1024.0 vs ridge 419.0 | memory-bound False | admitted True | eager 14937.0 us
+    iter 1: ACCEPTED  rel_err=5.89e-03  416.9 us  35.83x over eager
 
 === temp_perhead
-    AI 1024.0 vs ridge 419.0 | memory-bound False | admitted True | eager 16787.2 us
+    AI 1024.0 vs ridge 419.0 | memory-bound False | admitted True | eager 16797.3 us
     iter 1: REJECTED  rel_err=inf  CompilationError: tl.dot -- fp32 and bf16   [...]
     iter 2: REJECTED  rel_err=inf  CompilationError: tl.dot -- fp32 and bf16   [...]
     iter 3: REJECTED  rel_err=inf  OutOfResources: out of resource: shared memory,
                                    Required: 131072, Hardware limit: 101376
     no verified kernel within 3 iterations
 
-=== bias_alibi              eager 19487.1 us | iter 1: ACCEPTED  rel_err=5.95e-03   527.0 us  36.98x
-=== bias_dilated            eager 15172.2 us | iter 1: ACCEPTED  rel_err=3.91e-03  1119.5 us  13.55x
-=== bias_local              eager 15126.0 us | iter 1: ACCEPTED  rel_err=1.66e-02   402.1 us  37.62x
-=== bias_block_diagonal     eager 14996.3 us | iter 1: ACCEPTED  rel_err=4.52e-03   198.1 us  75.70x
-=== bias_prefix_lm          eager 15148.3 us | iter 1: ACCEPTED  rel_err=1.21e-02  1000.9 us  15.13x
-=== softcap_gemma2          eager 19966.9 us | iter 1: ACCEPTED  rel_err=5.34e-03   622.4 us  32.08x
-=== bias_sliding_window     eager 15042.4 us | iter 1: ACCEPTED  rel_err=3.85e-03   268.9 us  55.94x
+=== bias_alibi              eager 19493.2 us | iter 1: ACCEPTED  rel_err=5.77e-03   527.1 us  36.98x
+=== bias_dilated            eager 15171.2 us | iter 1: ACCEPTED  rel_err=4.55e-03  1119.7 us  13.55x
+=== bias_local              eager 15122.8 us | iter 1: ACCEPTED  rel_err=1.09e-02   401.3 us  37.68x
+=== bias_block_diagonal     eager 14994.8 us | iter 1: ACCEPTED  rel_err=5.83e-03   198.5 us  75.55x
+=== bias_prefix_lm          eager 15151.6 us | iter 1: ACCEPTED  rel_err=1.72e-02   999.6 us  15.16x
+=== softcap_gemma2          eager 19971.0 us | iter 1: ACCEPTED  rel_err=5.46e-03   620.5 us  32.19x
+=== bias_sliding_window     eager 15042.5 us | iter 1: ACCEPTED  rel_err=4.82e-03   268.7 us  55.98x
 
 ================================================================
 accepted 9/10
-geometric mean speedup over eager: 33.46x
+geometric mean speedup over eager: 32.02x
+
+
+================================================================================
+SQLITE NODE -- what the loop persisted for the agent to read back
+================================================================================
+
+profile rows : 10
+attempt rows : 13          (sigmoid 2, relu 1, temp_perhead 3, seven others 1 each)
+
+  sigmoid_attn   iter 1  rel_err inf  CompilationError: at 32:13 [...]
+  temp_perhead   iter 1  rel_err inf  CompilationError: at 118:20 [...]
+  temp_perhead   iter 2  rel_err inf  CompilationError: at 82:12 [...]
+  temp_perhead   iter 3  rel_err inf  OutOfResources: shared memory, Required: 131072

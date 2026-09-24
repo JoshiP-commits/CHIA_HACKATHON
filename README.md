@@ -62,21 +62,19 @@ Nothing in `chia_loop/` imports anything from `provenance/`.
 
 `RESULTS_L40S.md` reports the loop running for real on an **NVIDIA L40S** with
 only the LLM call bypassed: every kernel compiled by Triton for sm89, checked
-against the PyTorch reference and timed. 9/10 accepted, geomean **33.46x**
+against the PyTorch reference and timed. 9/10 accepted, geomean **32.02x**
 against **11.76x** for the same nine on the A100.
 
-The reason the speedup nearly triples is the point of the experiment. On the
-eight operators whose baseline reproduces across two runs, eager attention is
-**1.805x** slower on the L40S; the two devices' bandwidths differ by **1.800x**.
-The baseline is bandwidth-bound to within 0.3%, exactly as the minimum-traffic
-argument predicts, while the fused kernels got *faster* on the
-slower-bandwidth device.
+The reason the speedup nearly triples is the point of the experiment. Averaged
+over all ten operators, eager attention is **1.795x** slower on the L40S; the
+two devices' bandwidths differ by **1.800x**. The baseline is bandwidth-bound
+to within 0.3%, exactly as the minimum-traffic argument predicts, while the
+fused kernels got *faster* on the slower-bandwidth device.
 
-The first run reported 8/10. The failure turned out to be a bug in this
-repository's sigmoid reference, not in the kernel and not in the hardware --
-found by `verify_kernel` the first time it ever ran for real. That story, the
-one operator that genuinely does not port, and the limitations are all in
-`RESULTS_L40S.md`.
+Running for real also found three bugs in this repository that no replay could
+have caught, including one where the verification gate was right and the
+reference it compared against was wrong. Those, the one operator that genuinely
+does not port, and the limitations are all in `RESULTS_L40S.md`.
 
 ## Honest scope
 
