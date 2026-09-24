@@ -11,13 +11,22 @@ Edge discipline (this is the point of the loop, not an implementation detail):
   This follows CHIA's isolation principle (CHIA paper, 5.2): an agent that can
   reach the verifier can optimise the harness instead of the kernel.
 
-Resource tags are mode-dependent. On a provisioned cluster the GPU nodes request
-a virtual ``a100`` resource declared by a logical worker; on a single machine
-there are no custom resources, so requesting one would leave the task pending
-forever. Set GRAPHSYNTH_MODE=cluster to enable the tags.
+Resource tags are mode-dependent, and getting them wrong is not cosmetic: Ray
+sets ``CUDA_VISIBLE_DEVICES`` in each worker from the resources that task
+requested, so a GPU node that declares nothing is handed an empty device list
+and torch reports "No CUDA GPUs are available" even on a machine with a GPU
+sitting idle. The three measurement nodes therefore declare what they need:
+
+* ``GRAPHSYNTH_MODE=cluster`` -- a virtual ``a100`` resource, supplied by the
+  logical measurement worker in ``configs/cluster_a100.yaml``.
+* single machine with a GPU -- ``num_gpus=1``, detected below.
+* single machine without one -- nothing, so the CPU-only replay still runs;
+  requesting a resource that does not exist would leave the task pending
+  forever.
 """
 from __future__ import annotations
 
+import glob
 import importlib.util
 import os
 import tempfile
@@ -29,7 +38,27 @@ from chia_loop.state import (OpSpec, ProfileResult, VerifyResult, BenchResult)
 from chia_loop import timing
 
 _MODE = os.environ.get("GRAPHSYNTH_MODE", "local")
-GPU_OPTS = {"resources": {"a100": 1.0}} if _MODE == "cluster" else {}
+
+
+def _local_gpu_present() -> bool:
+    """Is there a GPU on this machine, without importing torch?
+
+    ``nodes`` is imported by the CPU-only replay, which deliberately runs with
+    no torch installed, so this check cannot call ``torch.cuda``. The device
+    files are the cheapest reliable signal, and under Slurm they reflect the
+    cgroup the job was given rather than the whole node.
+    """
+    if os.environ.get("GRAPHSYNTH_FORCE_CPU"):
+        return False
+    return bool(glob.glob("/dev/nvidia[0-9]*"))
+
+
+if _MODE == "cluster":
+    GPU_OPTS = {"resources": {"a100": 1.0}}
+elif _local_gpu_present():
+    GPU_OPTS = {"num_gpus": 1}
+else:
+    GPU_OPTS = {}
 
 TOL = {"bfloat16": 3e-2, "float16": 3e-2, "float32": 1e-4}
 

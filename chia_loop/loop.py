@@ -30,6 +30,7 @@ from chia.database.sqlite_node import SQLiteNode
 
 from chia_loop import ops as ops_mod
 from chia_loop import replay
+from chia_loop import timing
 from chia_loop.nodes import (profile_op, synthesize_kernel,
                              verify_kernel, benchmark_kernel)
 from chia_loop.tools import KernelWorkbenchTool
@@ -94,7 +95,8 @@ def run(args) -> int:
 
     for spec in selected:
         t0 = time.time()
-        prof = profile_op.chia_remote_blocking(spec, _chia_tag=spec.name)
+        prof = profile_op.chia_remote_blocking(spec, args.peak_bw, args.peak_flops,
+                                               _chia_tag=spec.name)
         SQLiteNode.execute(db_path,
             "INSERT OR REPLACE INTO profile VALUES (?,?,?,?,?,?,?)",
             (prof.op, prof.arithmetic_intensity, prof.ridge_point,
@@ -136,7 +138,8 @@ def run(args) -> int:
                 continue
 
             ben = benchmark_kernel.chia_remote_blocking(
-                spec, source, prof.eager_us, prof.min_dram_bytes, _chia_tag=tag)
+                spec, source, prof.eager_us, prof.min_dram_bytes, args.peak_bw,
+                _chia_tag=tag)
             row[6], row[8], row[9] = ben.kernel_us, ben.speedup, ben.pct_of_peak
             SQLiteNode.execute(db_path,
                 "INSERT INTO attempts VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", tuple(row))
@@ -180,6 +183,14 @@ def main(argv=None) -> int:
     p.add_argument("-S", type=int, default=2048)
     p.add_argument("-D", type=int, default=128)
     p.add_argument("--dtype", default="bfloat16")
+    # Roofline constants. The defaults describe the A100-SXM4-40GB the recorded
+    # run was measured on; the ridge point and the bandwidth-utilisation check
+    # are only meaningful for the device actually running, so override both on
+    # other hardware. L40S: --peak-bw 864e9 --peak-flops 362e12.
+    p.add_argument("--peak-bw", type=float, default=timing.PEAK_BW,
+                   help="device peak DRAM bandwidth in bytes/s")
+    p.add_argument("--peak-flops", type=float, default=312e12,
+                   help="device peak dense tensor-core FLOP/s for the dtype")
     return run(p.parse_args(argv))
 
 

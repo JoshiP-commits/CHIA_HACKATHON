@@ -45,6 +45,32 @@ node *bodies* are replaced by the recorded A100 run, using CHIA's `Bypass`
 (CHIA paper, 4.3.6, which names replaying non-deterministic LLM calls as the
 motivating case). For a live run see `configs/live_local.md`.
 
+## Running on hardware other than the A100
+
+Two things are device-specific and are not inferred automatically.
+
+**Resources.** Ray sets `CUDA_VISIBLE_DEVICES` in a worker from the resources
+that task requested, so a measurement node that declares nothing is handed an
+empty device list and torch reports `No CUDA GPUs are available` on a machine
+whose GPU is sitting idle. `nodes.py` therefore declares `num_gpus=1` on a
+single machine with a GPU, the virtual `a100` resource under
+`GRAPHSYNTH_MODE=cluster`, and nothing at all when there is no GPU, so the
+CPU-only replay still runs. `GRAPHSYNTH_FORCE_CPU=1` forces that last case.
+
+**Roofline constants.** The defaults describe the A100-SXM4-40GB the recorded
+run was measured on. The ridge point that stage 1 compares against, and the
+bandwidth-utilisation check that stage 4 uses to falsify bad timing, are only
+meaningful for the device actually running:
+
+```bash
+# L40S (Ada, sm89): 864 GB/s, 362 TFLOP/s dense bf16
+python -m chia_loop.loop --bypass chia_loop/configs/bypass_synthesis_only.yaml \
+    --peak-bw 864e9 --peak-flops 362e12
+```
+
+Speedups are ratios against eager on the same device, so they are comparable
+across hardware; absolute latencies are not.
+
 ## The design decision that matters
 
 CHIA distinguishes **programmatic** edges, driven by the orchestration program,
