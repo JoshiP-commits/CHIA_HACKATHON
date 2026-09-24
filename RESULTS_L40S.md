@@ -12,7 +12,8 @@ python -m chia_loop.loop --bypass chia_loop/configs/bypass_synthesis_only.yaml \
 
 Only the LLM call is bypassed. Every recorded kernel was really compiled by
 Triton for sm89, really checked against the PyTorch reference, and really
-timed. Raw numbers: `results/L40S_attention.csv`.
+timed. Raw numbers: `results/L40S_attention.csv`; console output:
+`results/L40S_run.log`.
 
 | | A100-SXM4-40GB | L40S |
 |---|---|---|

@@ -1,0 +1,78 @@
+Console output of the L40S run, captured 2026-09-25 on a single NVIDIA L40S
+of a university Slurm cluster. Shell prompt lines removed; everything below is
+verbatim program output.
+
+  python -m chia_loop.loop --bypass chia_loop/configs/bypass_synthesis_only.yaml \
+      --peak-bw 864e9 --peak-flops 362e12 --db /tmp/joshi.p/l40s.db
+
+Environment: torch 2.9.1+cu128, Triton 3.5.1, Python 3.10.12,
+NVIDIA L40S (compute capability 8.9, 46068 MiB), B=2 H=32 S=2048 D=128, bf16.
+
+================================================================================
+
+2026-09-25 04:33:55,534 INFO worker.py:2013 -- Started a local Ray instance.
+gs_attempts started at <host>:8000
+BYPASS synthesize_kernel (data=None, provider=True)      [x14]
+replay mode: providers installed from chia_loop/configs/bypass_synthesis_only.yaml
+
+=== sigmoid_attn
+    AI 1024.0 vs ridge 419.0 | memory-bound False | admitted True | eager 14947.7 us
+    iter 1: REJECTED  rel_err=inf  CompilationError: at 32:13:
+    offs_d = tl.arange(0, D_HEAD)
+             ^
+    arange's arguments must be of type tl.constexpr
+    iter 2: REJECTED  rel_err=1.01e+00
+    iter 3: REJECTED  rel_err=1.01e+00
+    no verified kernel within 3 iterations
+
+=== relu_attn
+    AI 1024.0 vs ridge 419.0 | memory-bound False | admitted True | eager 14936.6 us
+    iter 1: ACCEPTED  rel_err=6.26e-03  410.2 us  36.41x over eager
+
+=== temp_perhead
+    AI 1024.0 vs ridge 419.0 | memory-bound False | admitted True | eager 16787.8 us
+    iter 1: REJECTED  rel_err=inf  CompilationError: at 118:20:
+    acc = acc + tl.dot(p_ij, v)
+                ^
+    Both operands must be same dtype. Got fp32 and bf16
+    iter 2: REJECTED  rel_err=inf  CompilationError: at 82:12:
+    s = tl.dot(q, k, allow_tf32=True)
+        ^
+    Both operands must be same dtype. Got fp32 and bf16
+    iter 3: REJECTED  rel_err=inf  OutOfResources: out of resource: shared memory,
+        Required: 131072, Hardware limit: 101376. Reducing block sizes or
+        `num_stages` may help.
+    no verified kernel within 3 iterations
+
+=== bias_alibi
+    AI 1024.0 vs ridge 419.0 | memory-bound False | admitted True | eager 19499.7 us
+    iter 1: ACCEPTED  rel_err=5.86e-03  525.9 us  37.08x over eager
+
+=== bias_dilated
+    AI 1024.0 vs ridge 419.0 | memory-bound False | admitted True | eager 15167.2 us
+    iter 1: ACCEPTED  rel_err=6.44e-03  1118.0 us  13.57x over eager
+
+=== bias_local
+    AI 1024.0 vs ridge 419.0 | memory-bound False | admitted True | eager 15117.4 us
+    iter 1: ACCEPTED  rel_err=1.55e-02  400.1 us  37.78x over eager
+
+=== bias_block_diagonal
+    AI 1024.0 vs ridge 419.0 | memory-bound False | admitted True | eager 14992.5 us
+    iter 1: ACCEPTED  rel_err=5.28e-03  198.2 us  75.65x over eager
+
+=== bias_prefix_lm
+    AI 1024.0 vs ridge 419.0 | memory-bound False | admitted True | eager 15150.9 us
+    iter 1: ACCEPTED  rel_err=1.30e-02  994.4 us  15.24x over eager
+
+=== softcap_gemma2
+    AI 1024.0 vs ridge 419.0 | memory-bound False | admitted True | eager 19975.7 us
+    iter 1: ACCEPTED  rel_err=5.83e-03  620.9 us  32.17x over eager
+
+=== bias_sliding_window
+    AI 1024.0 vs ridge 419.0 | memory-bound False | admitted True | eager 15046.4 us
+    iter 1: ACCEPTED  rel_err=5.16e-03  269.5 us  55.83x over eager
+
+================================================================
+accepted 8/10
+geometric mean speedup over eager: 33.08x
+attempts database: /tmp/joshi.p/l40s.db
