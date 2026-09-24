@@ -136,7 +136,8 @@ the two clauses disagreeing is the visible signature of the gap.
 | `nodes.py` | the four `ChiaFunction` stages |
 | `tools.py` | `KernelWorkbenchTool` — the entire agent-reachable surface |
 | `loop.py` | orchestration, gates, feedback |
-| `ops.py` | the ten operators and their references, verbatim from `synth10.py` |
+| `ops.py` | the ten operators and their references, from `synth10.py` except the
+sigmoid mask, which follows the corrected `sigmoid_fix.py` |
 | `timing.py` | the validated loop timer, verbatim from `final_bench.py` |
 | `state.py` | typed edge payloads |
 | `replay.py` | `Bypass` providers over the recorded run |

@@ -50,9 +50,10 @@ run modes. Read that one.
 | `provenance/` | the standalone scripts the recordings came from, so the numbers can be traced rather than trusted |
 
 `provenance/` exists for one reason: `chia_loop/ops.py` and `chia_loop/timing.py`
-state that they are copied verbatim from `synth10.py` and `final_bench.py`.
-Those files are here so that claim can be checked with `diff` instead of taken
-on faith. `provenance/verify_paper_numbers.py` recomputes every published
+state where their contents came from. Those files are here so the claim can be
+checked with `diff` instead of taken on faith -- including the one place they
+deliberately differ, the sigmoid causal mask, where `ops.py` follows the
+corrected `sigmoid_fix.py` rather than `synth10.py`. `provenance/verify_paper_numbers.py` recomputes every published
 statistic from the CSVs and needs no GPU.
 
 Nothing in `chia_loop/` imports anything from `provenance/`.

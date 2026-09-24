@@ -3,6 +3,13 @@
 Semantics and prompt constraints are taken verbatim from ``synth10.py`` so the
 CHIA loop synthesizes against the same specification the paper evaluated.
 
+One deliberate departure. ``synth10.py`` builds the sigmoid reference by
+zeroing masked scores *before* the sigmoid, which leaves every masked
+position contributing 0.5 of its value vector, since sigmoid(0) = 0.5.
+``provenance/sigmoid_fix.py`` is the corrected re-run that the paper's
+sigmoid numbers come from, and it masks after the nonlinearity. The
+reference below follows the corrected version, not ``synth10.py``.
+
 torch is imported lazily: in replay (bypass) mode the loop runs with no torch
 and no GPU, so nothing here may import torch at module scope.
 """
@@ -109,14 +116,20 @@ def reference_for(spec: OpSpec) -> Callable:
                 s = mod(s)
             i, j = idx()
             ok = maskfn(i, j) if maskfn else (j <= i)
-            s = s.masked_fill(~ok, float("-inf") if norm == "softmax" else 0.0)
+            # The mask has to be applied on the side of the nonlinearity where
+            # "masked" actually means "contributes nothing". For softmax that is
+            # before, with -inf. For sigmoid it is AFTER: sigmoid(0) = 0.5, so
+            # zeroing the score first leaves every masked position contributing
+            # half of its value vector. relu is indifferent, since relu(0) = 0,
+            # but it is masked after as well so that all three read alike.
             if norm == "softmax":
-                p = torch.softmax(s.float(), -1).to(DT)
+                s = s.masked_fill(~ok, float("-inf"))
+                p = torch.softmax(s.float(), -1)
             elif norm == "sigmoid":
-                p = torch.sigmoid(s.float()).to(DT)
+                p = torch.sigmoid(s.float()).masked_fill(~ok, 0.0)
             else:
-                p = F.relu(s.float()).to(DT)
-            return p @ v
+                p = F.relu(s.float()).masked_fill(~ok, 0.0)
+            return p.to(DT) @ v
         return ref
 
     if name == "sigmoid_attn":
