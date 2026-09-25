@@ -63,7 +63,7 @@ measurement.
 
 ## Quick start
 
-No GPU, no API key, no credentials. About a minute.
+ ### No GPU, no API key, no credentials. About a minute.
 
 ```bash
 git clone https://github.com/JoshiP-commits/CHIA_HACKATHON.git
