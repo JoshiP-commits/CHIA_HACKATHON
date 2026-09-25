@@ -1,5 +1,5 @@
 # GraphSynth as a CHIA loop
- ### CHIA says : "Falling into you , on loop every time" 🎶🎵
+
 **A3 @ MICRO 2026 — CHIA Hackathon submission**
 
 An agentic loop, built on [CHIA](https://github.com/ucb-bar/chia), that
@@ -8,43 +8,51 @@ catalog does not cover, gates them on numerical correctness, and measures the
 survivors on hardware.
 
 ```mermaid
-%%{init: {"flowchart": {"wrappingWidth": 290, "nodeSpacing": 45, "rankSpacing": 80}}}%%
+%%{init: {"theme":"base","themeVariables":{"fontSize":"22px","fontFamily":"ui-sans-serif, system-ui, sans-serif","lineColor":"#94a3b8","edgeLabelBackground":"#ffffff","primaryTextColor":"#0f172a"},"flowchart":{"wrappingWidth":290,"nodeSpacing":40,"rankSpacing":60,"padding":12}}}%%
 flowchart LR
-    A["1 · profile_op<br/>roofline analysis:<br/>does this operator need a custom kernel?"]
-    SK(["skipped<br/>compute-bound, and PyTorch's<br/>fused catalog already covers it"])
+    A("<b>Stage 1 · profile_op</b><br/>ChiaFunction<br/>roofline: AI vs ridge point")
+    SK("skipped<br/>compute-bound and<br/>already fused")
 
-    subgraph AG["what the agent can reach"]
+    subgraph AG["Stage 2 — the loop's one agentic edge"]
         direction TB
-        B["2 · synthesize_kernel<br/>an LLM drafts a Triton kernel"]
-        T1["tool: gs_workbench<br/>read · write · smoke_compile<br/>does the draft load, compile and run?<br/>never whether it is correct or fast"]
-        T2["tool: gs_attempts, read-only<br/>what earlier attempts tried,<br/>and why each one failed"]
+        B("<b>Stage 2 · synthesize_kernel</b><br/>ChiaFunction<br/>the LLM writes a Triton kernel<br/>using only the two tools below")
+        T1("<b>ChiaTool · gs_workbench</b><br/>read · write · smoke_compile<br/>builds? never correct or fast")
+        T2("<b>ChiaTool · gs_attempts</b><br/>query · schema, read-only<br/>view of the Stage 5 node")
         B --- T1
         B --- T2
     end
 
-    C["3 · verify_kernel<br/>numerical check against<br/>the PyTorch reference"]
-    D["4 · benchmark_kernel<br/>CUDA-event timing, plus a<br/>bandwidth check that catches bad timing"]
-    DB[("attempts database<br/>every attempt, passed or failed")]
+    C("<b>Stage 3 · verify_kernel</b><br/>ChiaFunction<br/>vs the PyTorch reference")
+    D("<b>Stage 4 · benchmark_kernel</b><br/>ChiaFunction<br/>CUDA-event loop timer")
+    DB[("<b>Stage 5 · SQLiteNode</b><br/>profile + attempts")]
 
     A -- "admitted" --> B
     A -- "not admitted" --> SK
     B --> C
-    C -- "outside tolerance: retry" --> B
-    C -- "within tolerance" --> D
-    C -. "record the failure" .-> DB
-    D -. "record the timing" .-> DB
-    DB -. "read back before the next attempt" .-> T2
+    C -- "retry" --> B
+    C -- "pass" --> D
+    C -. "record" .-> DB
+    D -. "record" .-> DB
+    %% layout hint only: an invisible link, not an edge in the loop
+    T2 ~~~ D
 
-    classDef prog fill:#dbeafe,stroke:#1d4ed8,stroke-width:2px,color:#0f172a
-    classDef agent fill:#ffedd5,stroke:#c2410c,stroke-width:2px,color:#0f172a
-    classDef tool fill:#fef9c3,stroke:#a16207,stroke-width:1px,color:#0f172a
-    classDef store fill:#f1f5f9,stroke:#64748b,stroke-width:1px,color:#0f172a
+    classDef prog fill:#dbeafe,stroke:#60a5fa,stroke-width:2px,color:#0f172a
+    classDef agent fill:#fde4cf,stroke:#fb923c,stroke-width:2px,color:#0f172a
+    classDef tool fill:#d1fae5,stroke:#34d399,stroke-width:2px,color:#0f172a
+    classDef store fill:#f1f5f9,stroke:#94a3b8,stroke-width:2px,color:#0f172a
     class A,C,D prog
     class B agent
     class T1,T2 tool
     class DB,SK store
-    style AG fill:#fffbeb,stroke:#c2410c,stroke-dasharray:6 4,color:#7c2d12
+    style AG fill:#ffffff,stroke:#cbd5e1,stroke-width:2px,stroke-dasharray:4 4,color:#475569
 ```
+
+Blue nodes are **programmatic**: the orchestration program invokes each
+`ChiaFunction` directly and decides what happens next. The orange node is the
+loop's **one agentic edge** — inside it a model drives the work by calling the
+two MCP tools shown, and nothing else. `verify_kernel` and `benchmark_kernel`
+are never registered with any `ChiaTool`, so the agent cannot call, inspect or
+influence the gate that judges it.
 
 Ten attention variants. **10/10 verified on an A100** at a geometric mean of
 10.83x over eager PyTorch, and **9/10 re-verified and re-timed on an L40S** at
