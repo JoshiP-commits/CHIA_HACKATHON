@@ -19,8 +19,11 @@ rather than replaying recorded data.
 
 No GPU, no API key, no credentials. This is the one to run first.
 
+Get the code: `git clone https://github.com/JoshiP-commits/CHIA_HACKATHON.git`
+— or, if you are reading an anonymized copy, the **Download Repository**
+button at the top of the page.
+
 ```bash
-git clone https://github.com/JoshiP-commits/CHIA_HACKATHON.git
 cd CHIA_HACKATHON
 pip install -r requirements.txt
 python -m chia_loop.loop --bypass chia_loop/configs/bypass_replay.yaml
@@ -138,10 +141,14 @@ two-worker deployment that keeps credentials and GPU on separate machines.
 
 ## Verifying an installation
 
-Four commands, from a clean clone. This is the full check.
+Four commands, from a clean copy. This is the full check.
+
+Get a fresh copy into `verify/`:
+`git clone https://github.com/JoshiP-commits/CHIA_HACKATHON.git verify`
+— or unzip a downloaded copy there.
 
 ```bash
-git clone https://github.com/JoshiP-commits/CHIA_HACKATHON.git verify && cd verify
+cd verify
 pip install -r requirements.txt
 
 # a. the loop with no GPU at all

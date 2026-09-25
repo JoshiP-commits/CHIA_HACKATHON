@@ -65,8 +65,11 @@ measurement.
 
  ### No GPU, no API key, no credentials. About a minute.
 
+Get the code: `git clone https://github.com/JoshiP-commits/CHIA_HACKATHON.git`
+— or, if you are reading an anonymized copy, the **Download Repository**
+button at the top of the page.
+
 ```bash
-git clone https://github.com/JoshiP-commits/CHIA_HACKATHON.git
 cd CHIA_HACKATHON
 pip install -r requirements.txt
 python -m chia_loop.loop --bypass chia_loop/configs/bypass_replay.yaml
