@@ -5,11 +5,43 @@ synthesizes Triton kernels for attention variants PyTorch's fused-kernel
 catalog does not cover, gates them on numerical correctness, and measures the
 survivors on hardware.
 
-```
-  profile_op ──(admitted)──► [ synthesise ⇄ workbench + history tools ] ──► verify_kernel
-       ▲                                                                        │
-       │                                                                    fail│pass
-       └──────────────────── next candidate ◄──── persist ◄──── benchmark_kernel
+```mermaid
+%%{init: {"flowchart": {"wrappingWidth": 290, "nodeSpacing": 45, "rankSpacing": 80}}}%%
+flowchart LR
+    A["1 · profile_op<br/>roofline analysis:<br/>does this operator need a custom kernel?"]
+    SK(["skipped<br/>compute-bound, and PyTorch's<br/>fused catalog already covers it"])
+
+    subgraph AG["what the agent can reach"]
+        direction TB
+        B["2 · synthesize_kernel<br/>an LLM drafts a Triton kernel"]
+        T1["tool: gs_workbench<br/>read · write · smoke_compile<br/>does the draft load, compile and run?<br/>never whether it is correct or fast"]
+        T2["tool: gs_attempts, read-only<br/>what earlier attempts tried,<br/>and why each one failed"]
+        B --- T1
+        B --- T2
+    end
+
+    C["3 · verify_kernel<br/>numerical check against<br/>the PyTorch reference"]
+    D["4 · benchmark_kernel<br/>CUDA-event timing, plus a<br/>bandwidth check that catches bad timing"]
+    DB[("attempts database<br/>every attempt, passed or failed")]
+
+    A -- "admitted" --> B
+    A -- "not admitted" --> SK
+    B --> C
+    C -- "outside tolerance: retry" --> B
+    C -- "within tolerance" --> D
+    C -. "record the failure" .-> DB
+    D -. "record the timing" .-> DB
+    DB -. "read back before the next attempt" .-> T2
+
+    classDef prog fill:#dbeafe,stroke:#1d4ed8,stroke-width:2px,color:#0f172a
+    classDef agent fill:#ffedd5,stroke:#c2410c,stroke-width:2px,color:#0f172a
+    classDef tool fill:#fef9c3,stroke:#a16207,stroke-width:1px,color:#0f172a
+    classDef store fill:#f1f5f9,stroke:#64748b,stroke-width:1px,color:#0f172a
+    class A,C,D prog
+    class B agent
+    class T1,T2 tool
+    class DB,SK store
+    style AG fill:#fffbeb,stroke:#c2410c,stroke-dasharray:6 4,color:#7c2d12
 ```
 
 ## Run it without a GPU
