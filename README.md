@@ -1,5 +1,5 @@
 # GraphSynth as a CHIA loop
-
+ ### CHIA says : "Falling into you, on loop every time" 🎶🎵
 **A3 @ MICRO 2026 — CHIA Hackathon submission**
 
 An agentic loop, built on [CHIA](https://github.com/ucb-bar/chia), that
