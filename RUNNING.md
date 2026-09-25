@@ -19,6 +19,10 @@ rather than replaying recorded data.
 
 No GPU, no API key, no credentials. This is the one to run first.
 
+**Python 3.10, 3.11 or 3.12.** `chialoops` pins `ray==2.54.0`, and Ray
+publishes a 3.13 wheel for Linux only — on Windows and Apple Silicon the
+install fails on 3.13. See [Troubleshooting](#troubleshooting).
+
 Get the code: `git clone https://github.com/JoshiP-commits/CHIA_HACKATHON.git`
 — or, if you are reading an anonymized copy, the **Download Repository**
 button at the top of the page.
@@ -225,6 +229,11 @@ The loop detects a local GPU and declares `num_gpus=1`; if detection fails,
 suggests: it would stop Ray clearing the variable for tasks that requested no
 GPU, and `synthesize_kernel` requesting no GPU is how this loop keeps the agent
 off the measurement hardware.
+
+**`No matching distribution found for ray==2.54.0`.** `chialoops` pins that
+exact Ray version. Ray ships a Python 3.13 wheel for Linux only, so on Windows
+or Apple Silicon the install fails under 3.13. Use 3.10, 3.11 or 3.12:
+`py -3.12 -m venv .venv` on Windows, `python3.12 -m venv .venv` elsewhere.
 
 **`out of resource: shared memory`.** The kernel needs more shared memory per SM
 than your GPU has. Expected for `temp_perhead` on Ada; see above.

@@ -1,3 +1,5 @@
+# Python 3.10, 3.11 or 3.12. chialoops pins ray==2.54.0, which has no wheel
+# for Python 3.13 on Windows or Apple Silicon.
 # Replay mode -- no GPU, no credentials, no API key.
 #   pip install -r requirements.txt
 #   python -m chia_loop.loop --bypass chia_loop/configs/bypass_replay.yaml

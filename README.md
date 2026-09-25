@@ -65,6 +65,10 @@ measurement.
 
  ### No GPU, no API key, no credentials. About a minute.
 
+**Python 3.10, 3.11 or 3.12.** `chialoops` pins `ray==2.54.0`, and Ray
+publishes a 3.13 wheel for Linux only — on Windows and Apple Silicon the
+install fails on 3.13. See [Troubleshooting](RUNNING.md#troubleshooting).
+
 Get the code: `git clone https://github.com/JoshiP-commits/CHIA_HACKATHON.git`
 — or, if you are reading an anonymized copy, the **Download Repository**
 button at the top of the page.
