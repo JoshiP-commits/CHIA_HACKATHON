@@ -1,5 +1,5 @@
 # GraphSynth as a CHIA loop
- ### CHIA says : "Falling into you, on loop every time" 🎶🎵
+
 **A3 @ MICRO 2026 — CHIA Hackathon submission**
 
 An agentic loop, built on [CHIA](https://github.com/ucb-bar/chia), that
@@ -146,25 +146,49 @@ All three are documented in [RESULTS_L40S.md](RESULTS_L40S.md).
 
 ## Repository layout
 
-| | |
-|---|---|
-| `chia_loop/` | the loop — four `ChiaFunction` nodes, one `ChiaTool`, the bypass providers |
-| `results/` | recorded runs: per-operator latencies, relative errors, backend choice, console logs |
-| `kernels_gemini25pro_2346/`<br>`kernels_gemini31propre_0018/`<br>`kernels_sigmoid_fix/` | the Triton kernels, as the model wrote them |
-| `provenance/` | the standalone scripts the recordings came from |
-| `diagnose_sigmoid.py` | splits `verify_kernel`'s two input scales apart; the tool that localised the reference bug |
+```
+CHIA_HACKATHON/
+├── chia_loop/                      the loop itself
+│   ├── nodes.py                    the four ChiaFunction stages
+│   ├── tools.py                    gs_workbench — the agent's entire tool surface
+│   ├── loop.py                     orchestration, admission gate, retry
+│   ├── ops.py                      the ten operators and their PyTorch references
+│   ├── timing.py                   CUDA-event loop timer and the falsification check
+│   ├── state.py                    typed edge payloads, and the two-clause admission rule
+│   ├── replay.py                   Bypass providers over the recorded runs
+│   ├── configs/                    bypass, cluster and live-run configurations
+│   ├── run_colab.ipynb             one-click replay on Colab
+│   └── README.md                   the design argument — read this one
+│
+├── results/                        14 files: recorded A100 and L40S runs
+│   ├── FINAL_attention.csv         the A100 table the paper reports
+│   ├── L40S_attention.csv          the L40S run, both devices side by side
+│   ├── L40S_run.log                console output of the L40S runs
+│   └── …                           per-backend JSON, sweeps, compile comparison
+│
+├── kernels_gemini25pro_2346/       26 kernels — Gemini 2.5 Pro, every iteration
+├── kernels_gemini31propre_0018/    21 kernels — Gemini 3.1 Pro preview
+├── kernels_sigmoid_fix/             5 kernels — the corrected sigmoid re-run
+│
+├── provenance/                     the standalone scripts the recordings came from
+│   ├── synth10.py                  synthesis driver; ops.py is copied from it
+│   ├── final_bench.py              benchmark driver; timing.py is copied from it
+│   ├── sigmoid_fix.py              the corrected sigmoid reference
+│   └── verify_paper_numbers.py     recomputes every published statistic, no GPU
+│
+├── diagnose_sigmoid.py             splits verify_kernel's two input scales apart
+├── RUNNING.md                      how to run each mode, and what to expect
+├── RESULTS_L40S.md                 the cross-device experiment and its limitations
+├── requirements.txt
+└── LICENSE
+```
 
-`provenance/` exists so the numbers can be traced rather than trusted.
-`chia_loop/ops.py` and `chia_loop/timing.py` state where their contents came
-from; those scripts are here so the claim can be checked with `diff` — including
-the one place they deliberately differ, the sigmoid causal mask, where `ops.py`
-follows the corrected `sigmoid_fix.py` rather than `synth10.py`.
-`provenance/verify_paper_numbers.py` recomputes every published statistic from
-the CSVs and needs no GPU.
-
-Nothing in `chia_loop/` imports anything from `provenance/`.
-
----
+**Why `provenance/` is here.** `chia_loop/ops.py` and `chia_loop/timing.py` both
+state where their contents came from. Shipping the original scripts means that
+claim can be checked with `diff` rather than taken on faith — including the one
+place they deliberately differ: the sigmoid causal mask, where `ops.py` follows
+the corrected `sigmoid_fix.py` rather than the earlier `synth10.py`. Nothing in
+`chia_loop/` imports anything from `provenance/`.
 
 ## License
 
